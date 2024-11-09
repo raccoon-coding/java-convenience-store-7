@@ -11,14 +11,17 @@ import store.domain.product.SparklingWater;
 import store.domain.product.Sprite;
 import store.domain.product.VitaminWater;
 import store.domain.product.Water;
+import store.exception.NotContainProduct;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 import static store.domain.Promotion.MD추천상품;
 import static store.domain.Promotion.반짝할인;
 import static store.domain.Promotion.탄산할인;
 import static store.domain.Promotion.할인없음;
+import static store.exception.DomainException.존재하지_않는_상품;
 
 public enum Products {
     콜라(new Cola("콜라", 1_000, 10, 탄산할인, 10)),
@@ -44,8 +47,16 @@ public enum Products {
     }
 
     public static Product findProductByName(String productName) {
-        return Arrays.stream(Products.values())
+        Optional<Products> optional = Arrays.stream(Products.values())
                 .filter(products -> Objects.equals(products.getProduct().getName(), productName))
-                .findFirst().get().product;
+                .findFirst();
+        return verifyProduct(optional);
+
+    }
+    private static Product verifyProduct(Optional<Products> optional) {
+        if(optional.isPresent()) {
+            return optional.get().product;
+        }
+        throw new NotContainProduct(존재하지_않는_상품.getMessage());
     }
 }

@@ -69,13 +69,15 @@ class PurchaseTest {
         Integer totalStock = 19;
         Integer purchaseProduct = 2;
         Integer promotionProduct = 1;
-        Integer expect = 1;
+        Integer expectPurchaseProduct = 0;
+        Integer expectPromotionProduct = 1;
 
         ProductStockDto dto = new ProductStockDto(stock, purchaseCount, totalStock, purchaseProduct, promotionProduct);
         Purchase purchase = new Purchase(dto);
 
         PurchaseCountDto result = purchase.countPromotionProduct();
-        assertThat(result.addPurchaseCount()).isEqualTo(expect);
+        assertThat(result.addPurchaseCount()).isEqualTo(expectPurchaseProduct);
+        assertThat(result.addPromotionCount()).isEqualTo(expectPromotionProduct);
     }
 
     @Test
@@ -86,12 +88,14 @@ class PurchaseTest {
         Integer totalStock = 19;
         Integer purchaseProduct = 2;
         Integer promotionProduct = 1;
-        Integer expect = 2;
+        Integer expectPurchaseProduct = 1;
+        Integer expectPromotionProduct = 1;
 
         ProductStockDto dto = new ProductStockDto(stock, purchaseCount, totalStock, purchaseProduct, promotionProduct);
         Purchase purchase = new Purchase(dto);
 
         PurchaseCountDto result = purchase.countPromotionProduct();
-        assertThat(result.addPurchaseCount()).isEqualTo(expect);
+        assertThat(result.addPurchaseCount()).isEqualTo(expectPurchaseProduct);
+        assertThat(result.addPromotionCount()).isEqualTo(expectPromotionProduct);
     }
 }

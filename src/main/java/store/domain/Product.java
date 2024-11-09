@@ -10,9 +10,9 @@ import static store.domain.Promotion.할인없음;
 public abstract class Product {
     private final String name;
     private final Integer price;
-    private final Integer stock;
+    private Integer stock;
     private final Promotion promotion;
-    private final Integer promotionStock;
+    private Integer promotionStock;
 
     public Product(String name, Integer price, Integer stock, Promotion promotion, Integer promotionStock) {
         this.name = name;
@@ -30,7 +30,20 @@ public abstract class Product {
         return price;
     }
 
-    public Integer verifyStock() {
+    public void purchase(Integer count, Integer promotionCount) {
+        this.stock -= count;
+        this.promotionStock -= promotionCount;
+    }
+
+    public Integer getStock() {
+        return stock;
+    }
+
+    public Integer getPromotionStock() {
+        return promotionStock;
+    }
+
+    public Integer getTotalStock() {
         return stock + promotionStock;
     }
 
@@ -55,7 +68,7 @@ public abstract class Product {
     }
 
     private PurchaseCountDto countPromotionProduct(PromotionDto dto, Integer count) {
-        ProductStockDto productStockDto = new ProductStockDto(stock, count, verifyStock(),
+        ProductStockDto productStockDto = new ProductStockDto(stock, count, getTotalStock(),
                 dto.purchaseProduct(), dto.promotionProduct());
         Purchase purchase = new Purchase(productStockDto);
         return purchase.countPromotionProduct();
