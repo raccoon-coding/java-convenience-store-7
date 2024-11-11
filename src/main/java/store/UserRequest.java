@@ -39,14 +39,18 @@ public class UserRequest {
 
     private void purchase() {
         try{
-            Receipt userReceipt = purchaseConvenience();
-            getAgreePromotion(userReceipt);
-            getAgreeNotPromotion(userReceipt);
-            getMembershipDiscount(userReceipt);
-            buyProducts(userReceipt);
+            logic();
         } catch (MyIllegalStateException e) {
             handler.viewErrorMessage(e.getMessage());
         }
+    }
+
+    private void logic() {
+        Receipt userReceipt = purchaseConvenience();
+        getAgreePromotion(userReceipt);
+        getAgreeNotPromotion(userReceipt);
+        getMembershipDiscount(userReceipt);
+        buyProducts(userReceipt);
     }
 
     private Receipt purchaseConvenience() {
