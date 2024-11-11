@@ -3,21 +3,15 @@ package store.domain;
 import store.domain.dto.PromotionDto;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
-public enum Promotion {
-    탄산할인("탄산2+1", 2, 1, makeDate(2023, 12, 31), makeDate(2024, 12, 31)),
-    MD추천상품("MD추천상품", 1, 1, makeDate(2023, 12, 31), makeDate(2024, 12, 31)),
-    반짝할인("반짝할인",1,1, makeDate(2024, 10, 31), makeDate(2024, 11, 30)),
-    할인없음("할인없음", 0, 0, LocalDateTime.MIN, LocalDateTime.MAX);
-
+public class Promotion {
     private final String name;
     private final Integer buy;
     private final Integer get;
     private final LocalDateTime startDate;
     private final LocalDateTime endDate;
 
-    Promotion(String name, Integer buy, Integer get, LocalDateTime startDate, LocalDateTime endDate) {
+    public Promotion(String name, Integer buy, Integer get, LocalDateTime startDate, LocalDateTime endDate) {
         this.name = name;
         this.buy = buy;
         this.get = get;
@@ -34,9 +28,6 @@ public enum Promotion {
     }
 
     public PromotionDto tryPurchaseProduct() {
-        if(Objects.equals(name, "할인없음")){
-            return PromotionDto.of();
-        }
         return new PromotionDto(buy, get);
     }
 

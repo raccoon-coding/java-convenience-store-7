@@ -5,21 +5,22 @@ import store.domain.dto.PromotionDto;
 import store.domain.dto.PurchaseCountDto;
 
 import static camp.nextstep.edu.missionutils.DateTimes.now;
-import static store.domain.Promotion.할인없음;
 
-public abstract class Product {
+public class Product {
     private final String name;
     private final Integer price;
     private Integer stock;
     private final Promotion promotion;
-    private Integer promotionStock;
 
-    public Product(String name, Integer price, Integer stock, Promotion promotion, Integer promotionStock) {
+    public Product(String name, Integer price, Integer stock, Promotion promotion) {
         this.name = name;
         this.price = price;
         this.stock = stock;
         this.promotion = promotion;
-        this.promotionStock = promotionStock;
+    }
+
+    public Promotion getPromotion() {
+        return promotion;
     }
 
     public String getName() {
@@ -30,46 +31,51 @@ public abstract class Product {
         return price;
     }
 
-    public void purchase(Integer count, Integer promotionCount) {
+    public void purchase(Integer count) {
         this.stock -= count;
-        this.promotionStock -= promotionCount;
+    }
+
+    public Boolean isPromotionProduct() {
+        return this.promotion != null;
     }
 
     public Integer getStock() {
         return stock;
     }
 
-    public Integer getPromotionStock() {
-        return promotionStock;
+    public String getPromotionName() {
+        return promotion.getName();
     }
 
-    public Integer getTotalStock() {
-        return stock + promotionStock;
+    public PurchaseProduct tryPurchasePromotion(Integer count, Product promotion) {
+        PurchaseCountDto dto = verifyPromotion(count, promotion);
+        return new PurchaseProduct(this, promotion, dto);
     }
 
-    public PurchaseProduct tryPurchasePromotion(Integer count) {
-        PurchaseCountDto dto = verifyPromotion(count);
-        return new PurchaseProduct(this, dto);
-    }
-
-    private PurchaseCountDto verifyPromotion(Integer count) {
-        if(promotion == 할인없음) {
-            return PurchaseCountDto.of(count);
+    private PurchaseCountDto verifyPromotion(Integer count, Product promotion) {
+        if(promotion == null) {
+            ProductStockDto productStockDto = new ProductStockDto(count, this, null,
+                    1, 0);
+            Purchase purchase = new Purchase(productStockDto);
+            return purchase.countPromotionProduct();
         }
-        return verifyPromotionDate(count);
+        return verifyPromotionDate(count, promotion);
     }
 
-    private PurchaseCountDto verifyPromotionDate(Integer count) {
-        if(promotion.isPromotionDate(now())) {
-            PromotionDto dto = promotion.tryPurchaseProduct();
-            return countPromotionProduct(dto, count);
+    private PurchaseCountDto verifyPromotionDate(Integer count, Product product) {
+        if(product.promotion.isPromotionDate(now())) {
+            PromotionDto dto = product.promotion.tryPurchaseProduct();
+            return countPromotionProduct(dto, product, count);
         }
-        return PurchaseCountDto.of(count);
+        ProductStockDto productStockDto = new ProductStockDto(count, this, product,
+                1, 0);
+        Purchase purchase = new Purchase(productStockDto);
+        return purchase.countPromotionProduct();
     }
 
-    private PurchaseCountDto countPromotionProduct(PromotionDto dto, Integer count) {
-        ProductStockDto productStockDto = new ProductStockDto(stock, count, getTotalStock(),
-                dto.purchaseProduct(), dto.promotionProduct());
+    private PurchaseCountDto countPromotionProduct(PromotionDto dto, Product product, Integer count) {
+        ProductStockDto productStockDto = new ProductStockDto(count, this, product,
+                dto.buyCount(), dto.getCount());
         Purchase purchase = new Purchase(productStockDto);
         return purchase.countPromotionProduct();
     }

@@ -3,99 +3,62 @@ package store.domain;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import store.domain.dto.PurchaseCountDto;
+import store.util.FileLeader;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PurchaseProductTest {
+    Promotions promotions;
+    Products products;
+
+    public PurchaseProductTest() {
+        FileLeader leader = new FileLeader();
+        Promotions promotions = new Promotions(leader.loadPromotionsFromFile("src/main/resources/promotions.md"));
+        Products products = new Products(leader.loadProducts("src/main/resources/products.md", promotions));
+    }
 
     @Test
     @DisplayName("추가 구매하여 구매량 변경 확인")
     void 추가_구매_확인() {
-        Integer purchaseStock = 0;
-        Integer promotionStock = 5;
+        Integer purchaseCount = 4;
+        Integer purchasePromotionCount = 0;
         Integer promotionCount = 2;
-        Integer addPurchaseCount = 1;
-        Integer addPromotionCount = 1;
+        Integer addPromotionCount = 0;
 
-        Product product = Products.사이다.getProduct();
-        PurchaseCountDto dto = new PurchaseCountDto(purchaseStock, promotionStock, promotionCount, addPurchaseCount, addPromotionCount);
-        PurchaseProduct result = new PurchaseProduct(product, dto);
-        result.addPurchaseCount();
+        Product product = products.findProductByNameNotPromotion("사이다");
+        Product promotion = products.findProductByNamePromotion("사이다");
+        PurchaseCountDto dto = new PurchaseCountDto(purchaseCount, purchasePromotionCount, promotionCount, addPromotionCount);
+        PurchaseProduct result = new PurchaseProduct(product, promotion, dto);
+        result.addPromotionCount();
 
         String expectName = "사이다";
         Integer expectStock = 0;
         Integer expectPurchaseCount = 6;
         Integer expectPromotionCount = 3;
 
-        assertThat(result.getProduct().getName()).isEqualTo(expectName);
-        assertThat(result.getPurchaseStock()).isEqualTo(expectStock);
-        assertThat(result.getPurchasePromotionStock()).isEqualTo(expectPurchaseCount);
+        assertThat(result.getProductName()).isEqualTo(expectName);
+        assertThat(result.getPurchaseCount()).isEqualTo(expectStock);
+        assertThat(result.getPurchasePromotionCount()).isEqualTo(expectPurchaseCount);
         assertThat(result.getPromotionCount()).isEqualTo(expectPromotionCount);
     }
 
     @Test
-    @DisplayName("콜라 9개 구입시도")
-    void 구매_시도_확인() {
-        String expectName = "콜라";
-        Integer expectPurchase = 6;
-        Integer expectPromotion = 3;
-        Product product = Products.findProductByName(expectName);
-        PurchaseProduct purchaseProduct = product.tryPurchasePromotion(9);
-
-        assertThat(purchaseProduct.getProduct()).isEqualTo(product);
-        assertThat(purchaseProduct.getPurchasePromotionStock()).isEqualTo(expectPurchase);
-        assertThat(purchaseProduct.getPromotionCount()).isEqualTo(expectPromotion);
-    }
-
-    @Test
-    @DisplayName("콜라 8개 구입시도")
-    void 구매_시도_추가_구입_유도_확인() {
-        String expectName = "콜라";
-        Integer expectPurchase = 6;
-        Integer expectAddPromotion = 1;
-        Integer expectPromotion = 2;
-        Integer purchaseCount = 8;
-        Product product = Products.findProductByName(expectName);
-        PurchaseProduct purchaseProduct = product.tryPurchasePromotion(purchaseCount);
-
-        assertThat(purchaseProduct.getProduct()).isEqualTo(product);
-        assertThat(purchaseProduct.getPurchasePromotionStock()).isEqualTo(expectPurchase);
-        assertThat(purchaseProduct.getPromotionCount()).isEqualTo(expectPromotion);
-        assertThat(purchaseProduct.getAddPromotionCount()).isEqualTo(expectAddPromotion);
-    }
-
-    @Test
-    @DisplayName("콜라 7개 구입시도")
-    void 구매_시도_추가_구입_2개_유도_확인() {
-        String expectName = "콜라";
-        Integer expectPurchase = 5;
-        Integer expectAddPurchase = 1;
-        Integer expectAddPromotion = 1;
-        Integer expectPromotion = 2;
-        Integer purchaseCount = 7;
-        Product product = Products.findProductByName(expectName);
-        PurchaseProduct purchaseProduct = product.tryPurchasePromotion(purchaseCount);
-
-        assertThat(purchaseProduct.getProduct()).isEqualTo(product);
-        assertThat(purchaseProduct.getPurchasePromotionStock()).isEqualTo(expectPurchase);
-        assertThat(purchaseProduct.getPromotionCount()).isEqualTo(expectPromotion);
-        assertThat(purchaseProduct.getAddPurchaseCount()).isEqualTo(expectAddPurchase);
-        assertThat(purchaseProduct.getAddPromotionCount()).isEqualTo(expectAddPromotion);
-    }
-
-    @Test
-    @DisplayName("콜라 9개 구입")
-    void 구매_확인() {
-        String expectName = "콜라";
+    @DisplayName("감자칩 9개 구입, 프로모션 2개 증정")
+    void 구매_프로모션_초과_확인() {
+        String expectName = "감자칩";
         Integer purchaseCount = 9;
-        Product product = Products.findProductByName(expectName);
-        PurchaseProduct purchaseProduct = product.tryPurchasePromotion(purchaseCount);
+        Product product = products.findProductByNameNotPromotion(expectName);
+        Product promotion = products.findProductByNamePromotion(expectName);
+        PurchaseProduct purchaseProduct = product.tryPurchasePromotion(purchaseCount, promotion);
         purchaseProduct.purchase();
 
-        Integer expectStock = 10;
-        Integer expectPromotionStock = 1;
-        Product result = Products.findProductByName(expectName);
+        Integer expectStock = 1;
+        Integer expectPromotionStock = 0;
+        Integer expectPromotionCount = 2;
+        Product result = products.findProductByNameNotPromotion(expectName);
+        Product resultPromotion = products.findProductByNamePromotion(expectName);
         assertThat(result.getStock()).isEqualTo(expectStock);
-        assertThat(result.getPromotionStock()).isEqualTo(expectPromotionStock);
+        assertThat(resultPromotion.getStock()).isEqualTo(expectPromotionStock);
+        assertThat(purchaseProduct.getPromotionCount()).isEqualTo(expectPromotionCount);
     }
 }

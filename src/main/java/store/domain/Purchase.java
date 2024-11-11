@@ -2,73 +2,105 @@ package store.domain;
 
 import store.domain.dto.ProductStockDto;
 import store.domain.dto.PurchaseCountDto;
-import store.exception.OutOfStockException;
-
-import static store.exception.DomainException.재고_부족;
 
 public class Purchase {
-    private final Integer promotionStock;
+    private final Integer purchaseCount;
+    private final Product defaultProduct;
+    private final Product promotionProduct;
     private final Integer buyCount;
-    private final Integer totalStock;
-    private final Integer purchaseProduct;
-    private final Integer promotionProduct;
+    private final Integer getCount;
 
     private Integer tryPurchaseStockCount;
     private Integer tryPurchasePromotionStockCount;
     private Integer tryPromotionCount;
-    private Integer tryAddPurchaseCount;
     private Integer tryAddPromotionCount;
 
     public Purchase(ProductStockDto dto) {
-        this.promotionStock = dto.stock();
-        this.buyCount = dto.purchaseCount();
-        this.totalStock = dto.totalStock();
-        this.purchaseProduct = dto.purchaseProduct();
+        this.purchaseCount = dto.purchaseCount();
+        this.defaultProduct = dto.defaultProduct();
         this.promotionProduct = dto.promotionProduct();
+        this.buyCount = dto.buyCount();
+        this.getCount = dto.getCount();
     }
 
     public PurchaseCountDto countPromotionProduct() {
-        buyPromotion();
-        buyPortionPromotion();
-        buyNoPromotion();
-        outOfStock();
+        promotionProduct();
+        outOfStockNotPromotion();
+        stockNotPromotion();
         return new PurchaseCountDto(tryPurchaseStockCount, tryPurchasePromotionStockCount,
-                tryPromotionCount, tryAddPurchaseCount, tryAddPromotionCount);
+                tryPromotionCount, tryAddPromotionCount);
     }
 
-    private void buyPromotion() {
-        if(promotionStock >= purchaseProduct + promotionProduct && promotionStock >= buyCount) {
-            tryPurchaseStockCount = 0;
-            tryPromotionCount = buyCount / (purchaseProduct + promotionProduct);
-            tryPurchasePromotionStockCount = buyCount - tryPromotionCount;
-            tryAddPurchaseCount = purchaseProduct + promotionProduct - buyCount % (purchaseProduct + promotionProduct) - 1;
-            tryAddPromotionCount = 1;
+    private void promotionProduct() {
+        if(promotionProduct != null && getCount != 0) {
+            buyPromotion();
+            buyPortionPromotion();
+            buyNoPromotion();
+            outOfStock();
         }
     }
 
+
+    private void buyPromotion() {
+        if(promotionProduct.getStock() >= purchaseCount) {
+            tryPromotionCount = purchaseCount / (buyCount + getCount);
+            tryPurchaseStockCount = purchaseCount - tryPromotionCount;
+            tryPurchasePromotionStockCount = 0;
+            isPromotion();
+        }
+    }
+
+    private void isPromotion() {
+        if(purchaseCount % (buyCount + getCount) == buyCount) {
+            tryAddPromotionCount = 1;
+            return;
+        }
+        tryAddPromotionCount = 0;
+    }
+
     private void buyPortionPromotion() {
-        if(promotionStock >= purchaseProduct + promotionProduct && promotionStock < buyCount) {
-            tryPromotionCount = promotionStock / (purchaseProduct + promotionProduct);
-            tryPurchasePromotionStockCount = promotionStock - tryPromotionCount;
-            tryPurchaseStockCount = buyCount - promotionStock;
-            tryAddPurchaseCount = 0;
+        if(promotionProduct.getStock() >= buyCount + getCount && promotionProduct.getStock() < purchaseCount) {
+            tryPromotionCount = promotionProduct.getStock() / (buyCount + getCount);
+            tryPurchasePromotionStockCount = promotionProduct.getStock() % (buyCount + getCount);
+            tryPurchaseStockCount = purchaseCount - tryPromotionCount;
             tryAddPromotionCount = 0;
         }
     }
 
     private void buyNoPromotion() {
-        if(promotionStock < purchaseProduct + promotionProduct && totalStock >= buyCount) {
+        if(promotionProduct.getStock() < buyCount + getCount &&
+                promotionProduct.getStock() + defaultProduct.getStock() >= purchaseCount) {
             tryPromotionCount = 0;
             tryPurchasePromotionStockCount = 0;
-            tryPurchaseStockCount = buyCount;
-            tryAddPurchaseCount = 0;
+            tryPurchaseStockCount = purchaseCount;
             tryAddPromotionCount = 0;
         }
     }
 
     private void outOfStock() {
-        if(totalStock < buyCount) {
-            throw new OutOfStockException(재고_부족.getMessage());
+        if(promotionProduct.getStock() + defaultProduct.getStock() < purchaseCount) {
+            tryPromotionCount = 0;
+            tryPurchaseStockCount = -1;
+            tryPurchasePromotionStockCount = -1;
+            tryAddPromotionCount = 0;
+        }
+    }
+
+    private void outOfStockNotPromotion() {
+        if(defaultProduct.getStock() < purchaseCount) {
+            tryPromotionCount = 0;
+            tryPurchaseStockCount = -1;
+            tryPurchasePromotionStockCount = -1;
+            tryAddPromotionCount = 0;
+        }
+    }
+
+    private void stockNotPromotion() {
+        if(defaultProduct.getStock() >= purchaseCount) {
+            tryPromotionCount = 0;
+            tryPurchasePromotionStockCount = 0;
+            tryPurchaseStockCount = purchaseCount;
+            tryAddPromotionCount = 0;
         }
     }
 }

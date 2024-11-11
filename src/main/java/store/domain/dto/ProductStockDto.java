@@ -1,8 +1,10 @@
 package store.domain.dto;
 
-public record ProductStockDto(Integer stock, Integer purchaseCount, Integer totalStock, Integer purchaseProduct, Integer promotionProduct) {
+import store.domain.Product;
 
-    public static ProductStockDto of(Integer promotionStock, Integer purchaseCount, Integer totalStock, PromotionDto dto) {
-        return new ProductStockDto(promotionStock, purchaseCount, totalStock, dto.purchaseProduct(), dto.promotionProduct());
+public record ProductStockDto(Integer purchaseCount, Product defaultProduct, Product promotionProduct, Integer buyCount, Integer getCount) {
+
+    public static ProductStockDto of(Integer purchaseCount, Product defaultProduct, PromotionDto dto) {
+        return new ProductStockDto(purchaseCount, defaultProduct, null, dto.buyCount(), dto.getCount());
     }
 }
